@@ -8,6 +8,8 @@ import os
 import google.generativeai as genai
 from PIL import Image
 import base64
+import cv2
+import numpy as np
 
 os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -36,17 +38,43 @@ def set_background(image_file):
         unsafe_allow_html=True
     )
 
+def capture_image():
+    cap = cv2.VideoCapture(0)
+    st.write("Press 'c' to capture the image.")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            st.error("Failed to capture image.")
+            break
+        st.image(frame, channels="BGR")
+        if cv2.waitKey(1) & 0xFF == ord('c'):
+            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            cap.release()
+            cv2.destroyAllWindows()
+            return Image.fromarray(img)
+    cap.release()
+    cv2.destroyAllWindows()
+    return None
+
 # Set the background image
 set_background("image 2.jpg")
 
 st.markdown("<h1 style='font-style: italic;'>ChatBot with Image Recognition</h1>", unsafe_allow_html=True)
 input = st.text_input(" ChatBox: ", key="input")
 
-uploaded_file = st.file_uploader("Upload or Drag and Drop an image... ", type=["jpg", "jpeg", "png"])
-image = ""
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption='Uploaded Image.', use_container_width=True)
+capture_option = st.radio("Choose an option to provide an image:", ("Upload", "Capture using Webcam"))
+
+if capture_option == "Upload":
+    uploaded_file = st.file_uploader("Upload or Drag and Drop an image... ", type=["jpg", "jpeg", "png"])
+    image = ""
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        st.image(image, caption='Uploaded Image.', use_container_width=True)
+elif capture_option == "Capture using Webcam":
+    if st.button("Capture Image"):
+        image = capture_image()
+        if image is not None:
+            st.image(image, caption='Captured Image.', use_container_width=True)
 
 st.markdown(
     """
@@ -72,7 +100,7 @@ submit=st.button("Generate Response")
 
 if submit:
     if image is None:
-        st.warning("Please upload an image first.", icon="⚠️")
+        st.warning("Please upload or capture an image first.", icon="⚠️")
     else:
         with st.spinner("Generating response..."):
             response = get_gemini_response(input, image)
