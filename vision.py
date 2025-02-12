@@ -8,7 +8,6 @@ import os
 import google.generativeai as genai
 from PIL import Image
 import base64
-import random
 
 os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -21,8 +20,7 @@ def get_gemini_response(input, image):
         response = model.generate_content(image)
     return response.text
 
-def set_background(image_files):
-    image_file = random.choice(image_files)
+def set_background(image_file):
     with open(image_file, "rb") as f:
         data = f.read()
     encoded = base64.b64encode(data).decode()
@@ -32,11 +30,6 @@ def set_background(image_files):
         .stApp {{
             background-image: url(data:image/png;base64,{encoded});
             background-size: cover;
-            animation: fadeIn 2s ease-in-out;
-        }}
-        @keyframes fadeIn {{
-            0% {{ opacity: 0; }}
-            100% {{ opacity: 1; }}
         }}
         </style>
         """,
@@ -44,9 +37,9 @@ def set_background(image_files):
     )
 
 # Set the background image
-set_background(["image 1.jpg", "image 2.jpg", "image 3.jpg"])
+set_background("image 2.jpg")
 
-st.markdown("<center><h1 style='font-style: Bold;'>ChatBot with Image Recognition</h1></center>", unsafe_allow_html=True)
+st.markdown("<h1 style='font-style: italic;'>ChatBot with Image Recognition</h1>", unsafe_allow_html=True)
 input = st.text_input(" ChatBox: ", key="input")
 
 uploaded_file = st.file_uploader("Upload or Drag and Drop an image... ", type=["jpg", "jpeg", "png"])
